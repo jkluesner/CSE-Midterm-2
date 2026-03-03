@@ -1,1 +1,213 @@
+===== SERIES BASICS =====
 
+>>> obj = Series([-1, 2, -3, 4, -5])
+>>> obj
+
+0   -1
+1    2
+2   -3
+3    4
+4   -5
+dtype: int64
+
+>>> obj.dtype
+int64
+
+>>> obj.index
+RangeIndex(start=0, stop=5, step=1)
+
+>>> obj[2]
+-3
+
+>>> obj[1:4]
+
+1    2
+2   -3
+3    4
+dtype: int64
+
+>>> obj[obj > 0]
+
+1    2
+3    4
+dtype: int64
+
+
+===== SERIES WITH CUSTOM INDEX =====
+
+>>> obj2 = Series([1, -2, 3], index=['alice','bob','carol'])
+>>> obj2
+
+alice    1
+bob     -2
+carol    3
+dtype: int64
+
+>>> obj2['bob']
+-2
+
+>>> 'bob' in obj2
+True
+
+>>> obj2 + 5
+
+alice    6
+bob      3
+carol    8
+dtype: int64
+
+>>> obj_small = obj2[['alice','carol']]
+>>> obj2 + obj_small
+
+alice     2.0
+bob       NaN
+carol     6.0
+dtype: float64
+
+
+===== APPLY ON SERIES =====
+
+>>> obj2.apply(abs)
+
+alice    1
+bob      2
+carol    3
+dtype: int64
+
+
+===== DATAFRAME BASICS =====
+
+>>> cafes = DataFrame({
+        'name': ['east pole','chrome yellow','brash'],
+        'zip': [30324,30312,30318],
+        'poc': ['jared','kelly','matt']
+    })
+
+>>> cafes
+
+             name    zip    poc
+0       east pole  30324  jared
+1   chrome yellow  30312  kelly
+2           brash  30318   matt
+
+>>> cafes['zip']
+
+0    30324
+1    30312
+2    30318
+Name: zip, dtype: int64
+
+>>> cafes[['zip','poc']]
+
+     zip    poc
+0  30324  jared
+1  30312  kelly
+2  30318   matt
+
+
+===== LOC vs ILOC =====
+
+>>> cafes2 = cafes.set_index('name')
+>>> cafes2
+
+               zip    poc
+name                    
+east pole    30324  jared
+chrome yellow 30312  kelly
+brash        30318   matt
+
+>>> cafes2.loc['brash']
+
+zip    30318
+poc     matt
+Name: brash, dtype: object
+
+>>> cafes2.iloc[1]
+
+zip    30312
+poc    kelly
+Name: chrome yellow, dtype: object
+
+
+===== ADDING COLUMNS =====
+
+>>> cafes2['rating'] = 4.0
+>>> cafes2['price'] = '$$'
+>>> cafes2
+
+               zip    poc  rating price
+name                                    
+east pole    30324  jared     4.0    $$
+chrome yellow 30312  kelly     4.0    $$
+brash        30318   matt     4.0    $$
+
+>>> cafes2['value'] = cafes2['rating'] / cafes2['price'].apply(len)
+>>> cafes2
+
+               zip    poc  rating price  value
+name                                           
+east pole    30324  jared     4.0    $$    2.0
+chrome yellow 30312  kelly     4.0    $$    2.0
+brash        30318   matt     4.0    $$    2.0
+
+
+===== SAFE MODIFICATION WITH .loc =====
+
+>>> is_fancy = cafes2['zip'].isin({30318})
+>>> cafes2.loc[is_fancy,'price'] += '$'
+>>> cafes2
+
+               zip    poc  rating price  value
+name                                           
+east pole    30324  jared     4.0    $$    2.0
+chrome yellow 30312  kelly     4.0    $$    2.0
+brash        30318   matt     4.0   $$$    2.0
+
+
+===== APPLY ON DATAFRAME ROWS =====
+
+>>> def calc_value(row):
+        return row['rating'] / len(row['price'])
+
+>>> cafes2['value'] = cafes2.apply(calc_value, axis=1)
+>>> cafes2
+
+               zip    poc  rating price     value
+name                                             
+east pole    30324  jared     4.0    $$  2.000000
+chrome yellow 30312  kelly     4.0    $$  2.000000
+brash        30318   matt     4.0   $$$  1.333333
+
+
+===== CONCAT =====
+
+>>> cheap = cafes2[cafes2['price'] == '$$']
+>>> pricey = cafes2[cafes2['price'] == '$$$']
+>>> pd.concat([cheap, pricey])
+
+               zip    poc  rating price     value
+name                                             
+east pole    30324  jared     4.0    $$  2.000000
+chrome yellow 30312  kelly     4.0    $$  2.000000
+brash        30318   matt     4.0   $$$  1.333333
+
+
+===== REINDEX =====
+
+>>> cafes2.reindex(['brash','east pole','starbucks'])
+
+               zip    poc  rating price     value
+name                                             
+brash        30318   matt     4.0   $$$  1.333333
+east pole    30324  jared     4.0    $$  2.000000
+starbucks       NaN    NaN     NaN   NaN       NaN
+
+
+===== RESET INDEX =====
+
+>>> cafes2.reset_index()
+
+             name    zip    poc  rating price     value
+0       east pole  30324  jared     4.0    $$  2.000000
+1   chrome yellow  30312  kelly     4.0    $$  2.000000
+2           brash  30318   matt     4.0   $$$  1.333333
