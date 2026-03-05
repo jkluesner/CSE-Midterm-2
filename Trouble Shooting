@@ -1,1 +1,32 @@
 from pandas.testing import assert_frame_equal
+
+
+# display the column data types
+display(true_output_vars['output_0'].dtypes)
+display(returned_output_vars['output_0'].dtypes)
+
+
+
+# # # fetching the number of rows and columns
+rows_returned = returned_output_vars['output_0'].shape[0]
+cols_returned = returned_output_vars['output_0'].shape[1]
+
+rows_true = true_output_vars['output_0'].shape[0]
+cols_true = true_output_vars['output_0'].shape[1]
+
+# displaying the number of rows and columns
+print("Rows returned: " + str(rows_returned))
+print("Columns returned: " + str(cols_returned))
+print("Rows true: " + str(rows_true))
+print("Columns true: " + str(cols_true))
+
+
+# check column names directly
+returned_list = returned_output_vars['output_0'].columns.values.tolist() #change to the true output variables name
+true_list = true_output_vars['output_0'].columns.values.tolist()    #change to the returned output variables name
+
+for i,col_name in enumerate(returned_list):
+    if col_name != true_list[i]:
+        print('\nColumn names do not match')
+        print('Returned column name: ', col_name)
+        print('True column name: ', true_list[i])
