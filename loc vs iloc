@@ -1,0 +1,41 @@
+🧭 When to use .loc
+Use .loc when you want to select data by label — meaning:
+
+A row index label (e.g., 'ATL', 'row_42', or even 42 if that is the index label)
+
+A column name (e.g., 'Code', 'Description')
+
+A boolean mask (e.g., df['Description'] == airport_name)
+
+.loc is about meaning, not position.
+
+Examples
+python
+df.loc[42, 'Code']          # row with index label 42, column 'Code'
+df.loc[:, 'Description']    # all rows, column 'Description'
+df.loc[df['Code'] > 10000]  # boolean mask
+
+
+🎯 When to use .iloc
+Use .iloc when you want to select data by integer position — meaning:
+
+The first row → .iloc[0]
+
+The third column → .iloc[:, 2]
+
+The last row → .iloc[-1]
+
+.iloc is about location, not label.
+
+Examples
+python
+df.iloc[0, 1]   # first row, second column
+df.iloc[:, 0]   # all rows, first column
+df.iloc[-1]     # last row
+
+
+
+🧠 A simple rule of thumb
+Use this	When you want to select by…	Example
+.loc	label (row index, column name, boolean mask)	df.loc['ATL'], df.loc[df['Code'] > 10000]
+.iloc	position (0th row, 1st column, last row)	df.iloc[0], df.iloc[-1]
