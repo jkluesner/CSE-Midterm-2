@@ -1,0 +1,31 @@
+from pandas import DataFrame
+
+# 1. Create original DataFrame (default integer index)
+cafes = DataFrame({
+    'name': ['east pole', 'chrome yellow', 'brash'],
+    'zip': [30324, 30312, 30318],
+    'poc': ['jared', 'kelly', 'matt']
+})
+
+# 2. Create a new DataFrame and set a STRING index
+cafes2 = cafes[['poc', 'zip']]
+cafes2.index = cafes['name']      # set index to café names
+cafes2.index.name = None          # remove index label (optional)
+
+# 3. Copy preserves the index
+cafes4 = cafes2.copy()
+
+# 4. Access the index
+idx = cafes4.index
+
+# 5. Reset index and KEEP old index as a column
+cafes5 = cafes4.reset_index()
+
+# 6. Reset index and DROP old index completely
+cafes6 = cafes4.reset_index(drop=True)
+
+# 7. Manually add original index back as a column
+cafes6['name'] = cafes4.index
+
+# 8. Set a column back as the index
+cafes7 = cafes6.set_index('name')
