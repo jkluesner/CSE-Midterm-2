@@ -14,7 +14,6 @@ example:
 # Rename a Column
 df = df.rename(columns={'Old_Column_Name': 'New_Column_Name'})
 
-
 # Create a new Pandas DataFrame 
 newdf = df.copy(deep=True)
 
@@ -33,7 +32,8 @@ df = df.dropna()
 > how='any' (default): Drop rows or columns with any missing value.
 > how='all': Drop rows or columns where all values are missing.
 
-
+# fill missing values NA with 0
+df['Column_Name'] = df['Column_Name'].fillna(0)
 
 # Merge Dataframes
 pd.merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_index=False, right_index=False, suffixes=('_x', '_y'), sort=False)
