@@ -91,7 +91,11 @@ Merge on Different Column Names:
 Merge Using Index:
   merged_df = pd.merge(df1, df2, left_index=True, right_index=True, how='left')
 
-
+Ex:
+output = pd.merge(stockdf, resultdf)[
+    ['Date', 'Year', 'Firm', 'Open', 'Close', 'Volume', 'Day_Growth', 'Annual_Growth']
+]
+OR output = pd.merge(stockdf, resultdf, on=['Year', 'Firm'])
 
 # Dates
 ** If date_column is not in datetime format, you'll need to convert it first:
