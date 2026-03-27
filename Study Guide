@@ -1,1 +1,5 @@
+# Build the DataFrame
+df = pd.DataFrame(records)
 
+# Apply a function to a column
+df['Column_Name'] = df['Column_Name'].apply(function)
