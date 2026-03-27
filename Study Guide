@@ -13,3 +13,22 @@ example:
 
 # Rename a Column
 df = df.rename(columns={'Old_Column_Name': 'New_Column_Name'})
+
+
+# Create a new Pandas DataFrame 
+newdf = df.copy(deep=True)
+
+# Reset the Indexes
+df = df.reset_index(drop=True)
+> drop=True: This argument means that the old index will not be added as a column in the DataFrame. Without drop=True, the original index would be added as a new column.
+
+# Filter the DataFrame
+filterdf = df[df['Column_Name'] == filter_value]
+
+# Remove NA values
+df = df.dropna()
+> axis=0 (default): Drop rows with missing values.
+> axis=1: Drop columns with missing values.
+> subset=[column1, column2]: Only check specific columns for missing values.
+> how='any' (default): Drop rows or columns with any missing value.
+> how='all': Drop rows or columns where all values are missing.
