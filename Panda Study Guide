@@ -19,7 +19,37 @@ newdf = df.copy(deep=True)
 
 # Reset the Indexes
 df = df.reset_index(drop=True)
-> drop=True: This argument means that the old index will not be added as a column in the DataFrame. Without drop=True, the original index would be added as a new column.
+> Use reset_index() (without drop=True) if:
+You want to keep the original index as a column for reference.
+> Use reset_index(drop=True) if:
+You want to completely discard the original index and start with a clean integer index.
+
+Ex:
+# Sample DataFrame with a custom index
+data = {'A': [1, 2, 3], 'B': [4, 5, 6]}
+df = pd.DataFrame(data)
+df.index = ['x', 'y', 'z']
+
+df_reset = df.reset_index()
+Original DataFrame:
+   A  B
+x  1  4
+y  2  5
+z  3  6
+
+After reset_index():
+  index  A  B
+0     x  1  4
+1     y  2  5
+2     z  3  6
+
+After df_reset_drop = df.reset_index(drop=True)
+   A  B
+0  1  4
+1  2  5
+2  3  6
+
+
 
 # Filter the DataFrame
 filterdf = df[df['Column_Name'] == filter_value]
