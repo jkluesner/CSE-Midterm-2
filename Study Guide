@@ -1,5 +1,15 @@
-# Build the DataFrame
+# Load the data into Pandas
 df = pd.DataFrame(records)
 
 # Apply a function to a column
+- First Approach:
 df['Column_Name'] = df['Column_Name'].apply(function)
+- Second Approach:
+df['Column_Name'] = function(df['Column_Name'])
+
+example:
+1. df['Name'] = df['Name'].apply(str.upper) or df['Name'] = df['Name'].apply(lambda x: x.lower())
+2. df['Name'] = df['Name'].str.upper()
+
+# Rename a Column
+df = df.rename(columns={'Old_Column_Name': 'New_Column_Name'})
