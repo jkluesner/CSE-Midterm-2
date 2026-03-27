@@ -1,0 +1,62 @@
+# Load the data into Pandas
+df = pd.DataFrame(records)
+
+# Apply a function to a column
+- First Approach:
+df['Column_Name'] = df['Column_Name'].apply(function)
+- Second Approach:
+df['Column_Name'] = function(df['Column_Name'])
+
+example:
+1. df['Name'] = df['Name'].apply(str.upper) or df['Name'] = df['Name'].apply(lambda x: x.lower())
+2. df['Name'] = df['Name'].str.upper()
+
+# Rename a Column
+df = df.rename(columns={'Old_Column_Name': 'New_Column_Name'})
+
+
+# Create a new Pandas DataFrame 
+newdf = df.copy(deep=True)
+
+# Reset the Indexes
+df = df.reset_index(drop=True)
+> drop=True: This argument means that the old index will not be added as a column in the DataFrame. Without drop=True, the original index would be added as a new column.
+
+# Filter the DataFrame
+filterdf = df[df['Column_Name'] == filter_value]
+
+# Remove NA values
+df = df.dropna()
+> axis=0 (default): Drop rows with missing values.
+> axis=1: Drop columns with missing values.
+> subset=[column1, column2]: Only check specific columns for missing values.
+> how='any' (default): Drop rows or columns with any missing value.
+> how='all': Drop rows or columns where all values are missing.
+
+
+
+# Merge Dataframes
+pd.merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_index=False, right_index=False, suffixes=('_x', '_y'), sort=False)
+Parameters:
+> left: The first DataFrame to merge.
+> right: The second DataFrame to merge.
+> how: The type of join to perform:
+  > 'inner': Only rows with keys that appear in both DataFrames (default).
+  > 'left': All rows from the left DataFrame, matching rows from the right DataFrame.
+  > 'right': All rows from the right DataFrame, matching rows from the left DataFrame.
+  > 'outer': All rows from both DataFrames, with NaN where there are no matches.
+> on: The column(s) to join on (must be present in both DataFrames).
+> left_on: Column(s) from the left DataFrame to join on.
+> right_on: Column(s) from the right DataFrame to join on.
+> left_index: If True, uses the index of the left DataFrame for merging.
+> right_index: If True, uses the index of the right DataFrame for merging.
+> suffixes: A tuple specifying suffixes to append to columns with the same name in both DataFrames (default is ('_x', '_y')).
+> sort: If True, sorts the result DataFrame by the join keys (default is False).
+
+Common Use Cases:
+Merge on a Single Column (common column in both DataFrames):
+  merged_df = pd.merge(df1, df2, on='column_name', how='inner')
+Merge on Different Column Names:
+  merged_df = pd.merge(df1, df2, left_on='left_column', right_on='right_column', how='outer')
+Merge Using Index:
+  merged_df = pd.merge(df1, df2, left_index=True, right_index=True, how='left')
