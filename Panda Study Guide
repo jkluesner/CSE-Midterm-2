@@ -60,3 +60,19 @@ Merge on Different Column Names:
   merged_df = pd.merge(df1, df2, left_on='left_column', right_on='right_column', how='outer')
 Merge Using Index:
   merged_df = pd.merge(df1, df2, left_index=True, right_index=True, how='left')
+
+
+
+# Dates
+** If date_column is not in datetime format, you'll need to convert it first:
+df['date_column'] = pd.to_datetime(df['date_column'])
+
+# Extract the Month (as an integer)
+df['Month'] = df['Date'].dt.month
+# Extract the Day (as an integer)
+df['Day'] = df['Date'].dt.day
+
+# Convert Month to string
+df['Month_str'] = df['Date'].dt.strftime('%m')  # This will be '01', '02', etc.
+# Convert Day to string
+df['Day_str'] = df['Date'].dt.strftime('%d')  # This will be '01', '02', etc.
