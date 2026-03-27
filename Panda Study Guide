@@ -20,9 +20,9 @@ newdf = df.copy(deep=True)
 # Reset the Indexes
 df = df.reset_index(drop=True)
 > Use reset_index() (without drop=True) if:
-You want to keep the original index as a column for reference.
+You want to keep the original index as a column for reference. It is used to remove the multi-index (if any) and create a simple, sequential integer index. It helps simplify the structure of the DataFrame for easier processing.
 > Use reset_index(drop=True) if:
-You want to completely discard the original index and start with a clean integer index.
+You want to completely discard the original index and start with a clean integer index. It ensures that the old index is not added as a column in the final DataFrame, which would be unnecessary and potentially confusing for further operations.
 
 Ex:
 # Sample DataFrame with a custom index
