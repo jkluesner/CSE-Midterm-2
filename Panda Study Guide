@@ -131,3 +131,24 @@ df['Day'] = df['Date'].dt.day
 df['Month_str'] = df['Date'].dt.strftime('%m')  # This will be '01', '02', etc.
 # Convert Day to string
 df['Day_str'] = df['Date'].dt.strftime('%d')  # This will be '01', '02', etc.
+
+
+# Rename columns dynamically based on pattern
+
+# 1. Filter columns
+cols = [col for col in df.columns if 'keyword' in col]
+
+# 2. Sort (optional but recommended)
+cols = sorted(cols)
+
+# 3. Create mapping
+rename_dict = {old: f'new_name_{i+1}' for i, old in enumerate(cols)}
+
+# 4. Rename
+df = df.rename(columns=rename_dict)
+
+# Pandas string method (recommended)
+cols = df.columns[df.columns.str.contains('recpt')]
+
+# Using filter
+cols = df.filter(like='recpt').columns
