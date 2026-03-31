@@ -14,3 +14,10 @@ def calc_time_left_apply(df: pd.DataFrame) -> pd.DataFrame:
     # apply row-wise
     df['timeLeft'] = df.apply(time_left, axis=1)
     return df
+
+
+
+def converted(event_df: pd.DataFrame) -> pd.DataFrame:
+    event_df.groupby('drive_id', group_keys=False).apply(converted_by_drive)
+## OR ##
+    return event_df.groupby('drive_id', as_index=False).apply(converted_by_drive).reset_index(drop=True)
