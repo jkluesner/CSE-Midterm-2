@@ -211,3 +211,127 @@ starbucks       NaN    NaN     NaN   NaN       NaN
 0       east pole  30324  jared     4.0    $$  2.000000
 1   chrome yellow  30312  kelly     4.0    $$  2.000000
 2           brash  30318   matt     4.0   $$$  1.333333
+
+
+############################################################
+# 🧠 PANDAS TIBBLES – EXAM CHEAT SHEET
+############################################################
+
+import pandas as pd
+import numpy as np
+from pandas.testing import assert_frame_equal
+
+############################################################
+# ✅ 1. CANONICALIZE A DATAFRAME (MOST IMPORTANT)
+############################################################
+def canonicalize_tibble(X):
+    cols = sorted(X.columns)
+    return X[cols].sort_values(by=cols).reset_index(drop=True)
+
+############################################################
+# ✅ 2. ADD COMPUTED COLUMN (VECTORIZE!)
+############################################################
+def calc_prevalence(G):
+    assert 'cases' in G.columns and 'population' in G.columns
+    G = G.copy()
+    
+    # FAST (preferred)
+    G['prevalence'] = G['cases'] / G['population']
+    
+    # SLOW (avoid if possible)
+    # G['prevalence'] = G.apply(lambda row: row['cases']/row['population'], axis=1)
+    
+    return G
+
+############################################################
+# ✅ 3. CHECK IF TWO DATAFRAMES ARE EQUIVALENT
+############################################################
+def tibbles_are_equivalent(A, B):
+    try:
+        A = canonicalize_tibble(A)
+        B = canonicalize_tibble(B)
+        assert_frame_equal(A, B)
+        return 'Tibbles are equivalent!'
+    except AssertionError as e:
+        return str(e)
+
+############################################################
+# ✅ 4. MELT (WIDE → LONG)
+############################################################
+def melt(df, col_vals, key, value):
+    assert type(df) is pd.DataFrame
+    
+    keep = df.columns.difference(col_vals)
+    
+    result = pd.concat([
+        df[keep].assign(**{
+            key: c,
+            value: df[c]
+        })
+        for c in col_vals
+    ])
+    
+    return result
+
+############################################################
+# ✅ 5. SEPARATE (SPLIT COLUMN INTO MULTIPLE)
+############################################################
+def default_splitter(text):
+    import re
+    return re.findall(r'(\d+\.?\d+)', text)
+
+def separate(df, key, into, splitter=default_splitter):
+    assert type(df) is pd.DataFrame
+    assert key in df.columns
+    
+    def apply_splitter(text):
+        fields = splitter(text)
+        return pd.Series({into[i]: f for i, f in enumerate(fields)})
+    
+    df_extra = df[key].apply(apply_splitter)
+    result = pd.concat([df.drop(columns=[key]), df_extra], axis=1)
+    
+    return result
+
+############################################################
+# ⚡ PATTERN RECOGNITION (REMEMBER THESE)
+############################################################
+"""
+IF YOU SEE...                  → DO THIS
+
+Canonical form needed         → sort columns + sort rows + reset index
+New column calculation        → df['new'] = df['a'] / df['b']
+Compare DataFrames            → canonicalize → assert_frame_equal
+Wide → Long                   → melt
+Split column                  → separate
+
+############################################################
+# ⚠️ COMMON EXAM TRAPS
+############################################################
+
+❌ Using apply() when vectorization works
+❌ Forgetting reset_index(drop=True)
+❌ Column order mismatch
+❌ Data type mismatch (int8 vs int32)
+
+############################################################
+# 🏁 ULTRA-COMPACT VERSION
+############################################################
+
+# Canonical
+df = df[sorted(df.columns)].sort_values(by=sorted(df.columns)).reset_index(drop=True)
+
+# New column
+df['new'] = df['a'] / df['b']
+
+# Compare
+assert_frame_equal(A, B)
+
+# Drop column
+df.drop(columns=[key])
+
+# Combine
+pd.concat([...], axis=0)  # stack rows
+pd.concat([...], axis=1)  # add columns
+"""
+############################################################
