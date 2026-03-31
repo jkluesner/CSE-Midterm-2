@@ -1,23 +1,30 @@
 def calc_time_left_apply(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-
     def time_left(row):
         # convert MM:SS to seconds
         mins, secs = map(int, row['clock'].split(':'))
-        clock_seconds = mins * 60 + secs
-        
+        clock_seconds = mins * 60 + secs       
         # add remaining quarters
-        remaining_quarters = (4 - row['period']) * 15 * 60
-        
+        remaining_quarters = (4 - row['period']) * 15 * 60       
         return remaining_quarters + clock_seconds
-
     # apply row-wise
     df['timeLeft'] = df.apply(time_left, axis=1)
     return df
-
 
 
 def converted(event_df: pd.DataFrame) -> pd.DataFrame:
     event_df.groupby('drive_id', group_keys=False).apply(converted_by_drive)
 ## OR ##
     return event_df.groupby('drive_id', as_index=False).apply(converted_by_drive).reset_index(drop=True)
+
+
+def who_won(event_df: pd.DataFrame) -> pd.DataFrame:
+    # Sort so last row represents final game state
+    df = event_df.sort_values('timeLeft', ascending=False).copy()  
+    # Get final row (keeps labels — clearer than .values)
+    last_row = df.iloc[-1]  
+    # Determine if home team won
+    home_won = last_row['awayScore'] < last_row['homeScore']  
+    # Mark whether the team in possession is the winner
+    df['won'] = df['homeTeamPoss'] == home_won
+    return df
