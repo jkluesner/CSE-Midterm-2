@@ -28,3 +28,19 @@ def who_won(event_df: pd.DataFrame) -> pd.DataFrame:
     # Mark whether the team in possession is the winner
     df['won'] = df['homeTeamPoss'] == home_won
     return df
+
+
+def add_next_score(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.sort_values('timeLeft', ascending=False).copy()   
+    # Identify rows where score changes
+    score_change = (df['homeScore'].diff().fillna(0) != 0) | \
+                   (df['awayScore'].diff().fillna(0) != 0)  
+    # Compute score difference change (you may adjust based on your logic)
+    df['score_diff'] = df['homeScore'] - df['awayScore']
+    # Only keep score_diff at scoring moments
+    df['nextScore'] = df['score_diff'].where(score_change)  
+    # Backfill → propagate next score backward
+    df['nextScore'] = df['nextScore'].bfill()
+    # Flip sign for away possession
+    df.loc[~df['homeTeamPoss'], 'nextScore'] *= -1
+    return df.drop(columns='score_diff')
