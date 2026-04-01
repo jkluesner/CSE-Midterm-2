@@ -302,3 +302,20 @@ def decision_model(df: pd.DataFrame):
 # EXPECTED VALUE:
 # p1*v1 + p2*v2
 ```
+def summarize_interactions_str(conn):
+    df = pd.read_sql("SELECT * FROM Interactions", conn)
+    
+    total = len(df)
+    n_users = df['user_id'].nunique()
+    n_books = df['book_id'].nunique()
+    
+    n_reads = df['is_read'].sum()
+    n_ratings = df['rating'].gt(0).sum()
+    n_reviews = df['is_reviewed'].sum()
+    
+    return f"""There are {total:,} interactions.
+- Unique users: {n_users:,}
+- Unique books: {n_books:,}
+- Number of reads: {n_reads:,} ({n_reads/total:.1%} of all interactions)
+- Number of ratings: {n_ratings:,} ({n_ratings/total:.1%})
+- Number of reviews: {n_reviews:,} ({n_reviews/total:.1%})"""
