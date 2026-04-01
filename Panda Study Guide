@@ -144,3 +144,158 @@ cols = df.columns[df.columns.str.contains('recpt')]
 cols = df.filter(like='recpt').columns
 # List comprehension
 cols = [col for col in df.columns if 'keyword' in col]
+
+```python
+"""
+PANDAS CHEAT SHEET: .query() vs Boolean Indexing + .size()
+
+==================================================
+1. FILTERING ROWS
+==================================================
+
+🔹 BOOLEAN INDEXING (most fundamental)
+
+df[df['col'] > 5]
+df[(df['A'] > 0) & (df['B'] < 10)]
+df[df['col'].isin([1,2,3])]
+df[~df['col'].isna()]
+
+✔ Pros:
+- Works everywhere
+- Full Python flexibility
+- Handles complex logic
+
+❌ Cons:
+- More verbose
+- Harder to read with many conditions
+
+
+--------------------------------------------------
+
+🔹 .query() (cleaner, SQL-like)
+
+df.query("col > 5")
+df.query("A > 0 and B < 10")
+df.query("col in [1,2,3]")
+df.query("col.notna()")
+
+✔ Pros:
+- Cleaner, more readable
+- Great for chaining
+- Looks like SQL
+
+❌ Cons:
+- Column names must be valid variables
+- Limited Python support inside string
+
+
+--------------------------------------------------
+
+🔹 USING VARIABLES IN .query()
+
+threshold = 10
+
+df.query("col > @threshold")
+
+# @ pulls in Python variable
+
+
+==================================================
+2. WHEN TO USE WHICH
+==================================================
+
+USE .query() WHEN:
+✔ Simple filtering
+✔ You want readable code
+✔ You're chaining operations
+
+USE BOOLEAN INDEXING WHEN:
+✔ Complex logic
+✔ Using functions
+✔ Column names have spaces/special chars
+
+
+==================================================
+3. GROUP COUNTING
+==================================================
+
+🔹 .size() → counts ROWS
+
+df.groupby('A').size()
+
+# counts how many rows per group
+
+
+--------------------------------------------------
+
+🔹 .count() → counts NON-NULL values
+
+df.groupby('A').count()
+
+# counts per column, ignores NaNs
+
+
+--------------------------------------------------
+
+🔹 BEST PRACTICE (most common pattern)
+
+df.groupby(['A','B']).size().reset_index(name='count')
+
+
+==================================================
+4. COMMON PATTERNS (IMPORTANT)
+==================================================
+
+🔹 Filter + group + count
+
+(
+    df
+    .query("A > 0")
+    .groupby('B')
+    .size()
+    .reset_index(name='count')
+)
+
+
+--------------------------------------------------
+
+🔹 Self-join + count (co-occurrence)
+
+(
+    df.merge(df, on='key')
+      .query("id_x != id_y")
+      .groupby(['id_x','id_y'])
+      .size()
+      .reset_index(name='count')
+)
+
+
+==================================================
+5. QUICK MEMORY RULES
+==================================================
+
+.query()  → "filter like SQL"
+[]        → "filter like Python"
+.size()   → "count rows"
+.count()  → "count non-null values"
+
+.reset_index(name='count') → clean output
+
+
+==================================================
+6. MINI EXAMPLES
+==================================================
+
+# Boolean indexing
+df[df['score'] > 80]
+
+# Query equivalent
+df.query("score > 80")
+
+# Group count
+df.groupby('team').size()
+
+# Clean DataFrame
+df.groupby('team').size().reset_index(name='n')
+"""
+```
