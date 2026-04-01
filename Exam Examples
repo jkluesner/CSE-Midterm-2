@@ -65,3 +65,240 @@ def build_model_inputs(all_events_df: pd.DataFrame):
     third_or_fourth = df['down'].isin([3,4])    
     include_conversion = not_fga & not_punt & third_or_fourth
     return df.loc[include_conversion, conversion_fields], df[ep_fields], df[win_prob_fields]
+
+
+```python
+"""
+PANDAS + NUMPY STUDY GUIDE (EXAM READY)
+Focus: WHAT each line does + WHY + SYNTAX patterns
+
+Think of this as:
+"if I forget everything, I can rebuild it from here"
+"""
+
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+
+
+# ==================================================
+# 1. TIME LEFT (STRING → NUMERIC, VECTORIZED)
+# ==================================================
+def calc_time_left(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()  # avoid modifying original
+    
+    # Split "MM:SS" into two columns
+    # expand=True → returns DataFrame (NOT list)
+    time_parts = df['clock'].str.split(':', expand=True).astype(int)
+    
+    minutes = time_parts[0]
+    seconds = time_parts[1]
+    
+    # (4 - period) → quarters remaining
+    # * 900 → seconds per quarter
+    # + current clock time
+    df['timeLeft'] = (4 - df['period']) * 900 + minutes * 60 + seconds
+    
+    return df
+
+
+# ==================================================
+# 2. BOOLEAN FILTERING (CORE PANDAS SKILL)
+# ==================================================
+def filter_non_plays_and_ot(df: pd.DataFrame) -> pd.DataFrame:
+    
+    # isin(list) → True if value is in list
+    # ~ → NOT (invert True/False)
+    plays = ~df['type'].isin(['Penalty', 'Timeout'])
+    
+    # Find events that go into overtime
+    ot_events = df.loc[df['timeLeft'] < 0, 'event_id'].unique()
+    
+    # isin again → check membership
+    ends_in_reg = ~df['event_id'].isin(ot_events)
+    
+    # & → AND (both conditions must be True)
+    return df.loc[plays & ends_in_reg]
+
+
+# ==================================================
+# 3. GROUPBY + SHIFT (LAG FEATURES)
+# ==================================================
+def lag_score(df: pd.DataFrame) -> pd.DataFrame:
+    
+    # Must sort BEFORE shift (order matters)
+    df = df.sort_values(['event_id', 'timeLeft'], ascending=[True, False]).copy()
+    
+    # groupby('event_id') → split into groups
+    # [['homeScore','awayScore']] → select columns
+    # shift(1) → move values DOWN by 1 row
+    # fill_value=0 → first row becomes 0
+    
+    df[['homeScore', 'awayScore']] = (
+        df.groupby('event_id')[['homeScore', 'awayScore']]
+          .shift(1, fill_value=0)
+    )
+    
+    return df
+
+
+# ==================================================
+# 4. NEXT SCORE (WHERE + BFILL = REPLACE LOOPS)
+# ==================================================
+def add_next_score(df: pd.DataFrame) -> pd.DataFrame:
+    
+    df = df.sort_values('timeLeft', ascending=False).copy()
+    
+    # diff() → change from previous row
+    # ne(0) → not equal to 0 (True if change happened)
+    # any(axis=1) → True if ANY column changed
+    score_change = df[['homeScore', 'awayScore']].diff().ne(0).any(axis=1)
+    
+    # Score difference (home perspective)
+    score_diff = df['homeScore'] - df['awayScore']
+    
+    # where(condition):
+    # keep value IF condition True
+    # else → NaN
+    temp = score_diff.where(score_change)
+    
+    # bfill():
+    # fill NaN with NEXT valid value (looking downward)
+    df['nextScore'] = temp.bfill()
+    
+    # Flip sign if away team has possession
+    # ~ → NOT (homeTeamPoss False → away team)
+    df.loc[~df['homeTeamPoss'], 'nextScore'] *= -1
+    
+    return df
+
+
+# ==================================================
+# 5. WHO WON (ILOC + BOOLEAN LOGIC)
+# ==================================================
+def who_won(df: pd.DataFrame) -> pd.DataFrame:
+    
+    df = df.sort_values('timeLeft', ascending=False).copy()
+    
+    # iloc[-1] → last row
+    last = df.iloc[-1]
+    
+    # Compare final scores
+    home_won = last['homeScore'] > last['awayScore']
+    
+    # == → elementwise comparison
+    # True if possession team == winning team
+    df['won'] = df['homeTeamPoss'] == home_won
+    
+    return df
+
+
+# ==================================================
+# 6. STRING FILTERING (BETTER THAN APPLY)
+# ==================================================
+def build_model_inputs(df: pd.DataFrame):
+    
+    # Remove invalid downs
+    df = df[df['down'] != 0].copy()
+    
+    # str.contains:
+    # case=False → ignore capitalization
+    # ~ → NOT match
+    not_fga = ~df['type'].str.contains('field goal', case=False)
+    not_punt = ~df['type'].str.contains('punt', case=False)
+    
+    # isin → check membership
+    third_fourth = df['down'].isin([3, 4])
+    
+    mask = not_fga & not_punt & third_fourth
+    
+    # .loc[rows, columns]
+    conversion = df.loc[mask, ['event_id','play_id','down','distance','converted']]
+    ep = df[['event_id','play_id','down','distance','yardsToEndzone','nextScore']]
+    win_prob = df[['event_id','play_id','down','distance','yardsToEndzone',
+                   'timeLeft','awayScore','homeScore','homeTeamPoss','won']]
+    
+    return conversion, ep, win_prob
+
+
+# ==================================================
+# 7. CONDITIONAL LOGIC (NP.WHERE)
+# ==================================================
+def win_prob_model(df: pd.DataFrame) -> np.ndarray:
+    
+    offense_ep = ep_model(df)  # expected points
+    
+    # np.where(condition, if_true, if_false)
+    mu = np.where(
+        df['homeTeamPoss'],
+        offense_ep + df['homeScore'] - df['awayScore'],
+        offense_ep + df['awayScore'] - df['homeScore']
+    )
+    
+    # sigma = uncertainty
+    # decreases as time decreases
+    sigma = 13.85 / np.sqrt(3600 / (1 + df['timeLeft']))
+    
+    # norm.cdf(x, loc, scale):
+    # probability value ≤ x
+    return 1 - norm.cdf(0.5, loc=mu, scale=sigma)
+
+
+# ==================================================
+# 8. EXPECTED VALUE (DECISION MODEL)
+# ==================================================
+def decision_model(df: pd.DataFrame):
+    
+    # Complement probabilities
+    fg_miss = 1 - df['fg_make_prob']
+    go_fail = 1 - df['go_succeed_prob']
+    
+    # Expected value formula:
+    # P(A)*value(A) + P(B)*value(B)
+    
+    df['kick_wp'] = (
+        df['fg_make_prob'] * df['fg_make_wp'] +
+        fg_miss * df['fg_miss_wp']
+    )
+    
+    df['go_wp'] = (
+        df['go_succeed_prob'] * df['succeed_wp'] +
+        go_fail * df['fail_wp']
+    )
+    
+    return df
+
+
+# ==================================================
+# 🔥 CORE PATTERNS (MEMORIZE THESE)
+# ==================================================
+
+# FILTERING:
+# df[condition]
+# ~ (NOT), & (AND), | (OR)
+
+# STRING:
+# df['col'].str.contains('text', case=False)
+
+# GROUP OPS:
+# df.groupby('col')['x'].shift()
+
+# CONDITIONAL:
+# np.where(condition, A, B)
+
+# KEEP VALUES:
+# series.where(condition)
+
+# FILL:
+# .ffill() → use previous value
+# .bfill() → use next value
+
+# LAST ROW:
+# df.iloc[-1]
+
+# DIFFERENCE:
+# .diff() → change between rows
+
+# EXPECTED VALUE:
+# p1*v1 + p2*v2
+```
