@@ -11,6 +11,7 @@ WHERE salary > (
 );
 
 -- 2. Correlated subquery
+__ Return employees whose salary is above the average salary of their own department.
 SELECT e.name, e.department, e.salary
 FROM employees e
 WHERE e.salary > (
