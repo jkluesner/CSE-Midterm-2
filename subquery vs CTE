@@ -1,11 +1,8 @@
-🧩 1. Use a Subquery when it’s simple and used once
+-- ================================
+-- SUBQUERY EXAMPLES
+-- ================================
 
-A subquery is best when:
-
-The logic is short and straightforward
-You only need it once
-It fits naturally inside a WHERE, SELECT, or FROM
-✅ Example: Filter based on an aggregate
+-- 1. Simple aggregate filter
 SELECT name, salary
 FROM employees
 WHERE salary > (
@@ -13,26 +10,50 @@ WHERE salary > (
     FROM employees
 );
 
-
-🧩 2. Use a CTE when the logic is complex or reused
-
-A CTE (Common Table Expression) is better when:
-
-You need to reuse the result
-The query is getting hard to read
-You’re breaking logic into steps
-You’re doing recursive queries (CTEs are required for this)
-✅ Example: Reuse a computed dataset
-WITH avg_salary AS (
-    SELECT AVG(salary) AS avg_sal
+-- 2. Correlated subquery
+SELECT e.name, e.department, e.salary
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(salary)
     FROM employees
-)
-SELECT name, salary
-FROM employees, avg_salary
-WHERE employees.salary > avg_salary.avg_sal
+    WHERE department = e.department
+);
 
-🧩 3. When you need multiple steps → CTE wins
-❌ Subquery version (harder to read)
+-- 3. EXISTS example
+SELECT name
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.customer_id = c.id
+);
+
+-- 4. Subquery in SELECT
+SELECT 
+    name,
+    salary,
+    (SELECT MAX(salary) FROM employees) AS max_salary
+FROM employees;
+
+-- 5. IN clause subquery
+SELECT name
+FROM employees
+WHERE department_id IN (
+    SELECT id
+    FROM departments
+    WHERE location = 'New York'
+);
+
+-- 6. HAVING with subquery
+SELECT product_id
+FROM sales
+GROUP BY product_id
+HAVING SUM(quantity) > (
+    SELECT AVG(quantity)
+    FROM sales
+);
+
+-- 7. Nested subquery in FROM
 SELECT department, COUNT(*)
 FROM (
     SELECT *
@@ -42,18 +63,104 @@ FROM (
     )
 ) high_paid
 GROUP BY department;
-✅ CTE version (cleaner)
-WITH high_paid AS (
-    SELECT *
+
+
+-- ================================
+-- CTE EXAMPLES
+-- ================================
+
+-- 1. Basic CTE
+WITH avg_salary AS (
+    SELECT AVG(salary) AS avg_sal
     FROM employees
-    WHERE salary > (SELECT AVG(salary) FROM employees)
+)
+SELECT name, salary
+FROM employees, avg_salary
+WHERE employees.salary > avg_salary.avg_sal;
+
+-- 2. Multi-step transformation
+WITH dept_avg AS (
+    SELECT department, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department
+),
+above_avg AS (
+    SELECT e.*
+    FROM employees e
+    JOIN dept_avg d ON e.department = d.department
+    WHERE e.salary > d.avg_salary
 )
 SELECT department, COUNT(*)
-FROM high_paid
+FROM above_avg
 GROUP BY department;
 
+-- 3. Reusable dataset
+WITH recent_orders AS (
+    SELECT *
+    FROM orders
+    WHERE order_date >= '2025-01-01'
+)
+SELECT 
+    COUNT(*) AS total_orders,
+    SUM(amount) AS total_revenue
+FROM recent_orders;
 
-✅ Example: Organizational hierarchy
+-- 4. Deduplication with window function
+WITH ranked AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at DESC) AS rn
+    FROM users
+)
+SELECT *
+FROM ranked
+WHERE rn = 1;
+
+-- 5. Reusing CTE multiple times
+WITH sales_summary AS (
+    SELECT product_id, SUM(amount) AS total_sales
+    FROM sales
+    GROUP BY product_id
+)
+SELECT *
+FROM sales_summary
+WHERE total_sales > 1000
+
+UNION
+
+SELECT *
+FROM sales_summary
+WHERE total_sales < 100;
+
+-- 6. Step-by-step pipeline
+WITH filtered AS (
+    SELECT *
+    FROM orders
+    WHERE status = 'completed'
+),
+high_value AS (
+    SELECT *
+    FROM filtered
+    WHERE amount > 500
+)
+SELECT *
+FROM high_value;
+
+-- 7. Joining multiple CTEs
+WITH revenue AS (
+    SELECT customer_id, SUM(amount) AS total_spent
+    FROM orders
+    GROUP BY customer_id
+),
+visits AS (
+    SELECT customer_id, COUNT(*) AS visit_count
+    FROM visits
+    GROUP BY customer_id
+)
+SELECT r.customer_id, total_spent, visit_count
+FROM revenue r
+JOIN visits v ON r.customer_id = v.customer_id;
+
+-- 8. Recursive CTE (hierarchy)
 WITH RECURSIVE org_chart AS (
     SELECT id, name, manager_id
     FROM employees
