@@ -1,0 +1,32 @@
+🧩 1. Use a Subquery when it’s simple and used once
+
+A subquery is best when:
+
+The logic is short and straightforward
+You only need it once
+It fits naturally inside a WHERE, SELECT, or FROM
+✅ Example: Filter based on an aggregate
+SELECT name, salary
+FROM employees
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM employees
+);
+
+
+🧩 2. Use a CTE when the logic is complex or reused
+
+A CTE (Common Table Expression) is better when:
+
+You need to reuse the result
+The query is getting hard to read
+You’re breaking logic into steps
+You’re doing recursive queries (CTEs are required for this)
+✅ Example: Reuse a computed dataset
+WITH avg_salary AS (
+    SELECT AVG(salary) AS avg_sal
+    FROM employees
+)
+SELECT name, salary
+FROM employees, avg_salary
+WHERE employees.salary > avg_salary.avg_sal
