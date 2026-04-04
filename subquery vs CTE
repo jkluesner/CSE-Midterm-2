@@ -30,3 +30,24 @@ WITH avg_salary AS (
 SELECT name, salary
 FROM employees, avg_salary
 WHERE employees.salary > avg_salary.avg_sal
+
+🧩 3. When you need multiple steps → CTE wins
+❌ Subquery version (harder to read)
+SELECT department, COUNT(*)
+FROM (
+    SELECT *
+    FROM employees
+    WHERE salary > (
+        SELECT AVG(salary) FROM employees
+    )
+) high_paid
+GROUP BY department;
+✅ CTE version (cleaner)
+WITH high_paid AS (
+    SELECT *
+    FROM employees
+    WHERE salary > (SELECT AVG(salary) FROM employees)
+)
+SELECT department, COUNT(*)
+FROM high_paid
+GROUP BY department;
