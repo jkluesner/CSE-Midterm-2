@@ -51,3 +51,18 @@ WITH high_paid AS (
 SELECT department, COUNT(*)
 FROM high_paid
 GROUP BY department;
+
+
+✅ Example: Organizational hierarchy
+WITH RECURSIVE org_chart AS (
+    SELECT id, name, manager_id
+    FROM employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    SELECT e.id, e.name, e.manager_id
+    FROM employees e
+    JOIN org_chart o ON e.manager_id = o.id
+)
+SELECT * FROM org_chart;
