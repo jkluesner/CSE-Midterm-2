@@ -1,0 +1,214 @@
+/* ================================
+   SQL STUDY GUIDE (MISSING CONCEPTS)
+   ================================ */
+
+
+/* ================================
+   1. ADVANCED WINDOW FUNCTIONS
+   ================================ */
+
+-- Row Number (dedup / latest record)
+SELECT *,
+       ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY date DESC) AS rn
+FROM table;
+
+-- Rank vs Dense Rank
+RANK() OVER (PARTITION BY category ORDER BY sales DESC);
+DENSE_RANK() OVER (PARTITION BY category ORDER BY sales DESC);
+
+-- LAG / LEAD (previous / next row)
+LAG(sales) OVER (ORDER BY month);
+LEAD(sales) OVER (ORDER BY month);
+
+-- Running total
+SUM(sales) OVER (ORDER BY date);
+
+-- Partition + order
+SUM(sales) OVER (PARTITION BY category ORDER BY date);
+
+
+/* ================================
+   2. TIME SERIES ANALYSIS
+   ================================ */
+
+-- Month-over-month growth
+SELECT month,
+       sales,
+       sales - LAG(sales) OVER (ORDER BY month) AS growth
+FROM t;
+
+-- Rolling average (3-period)
+AVG(sales) OVER (
+    ORDER BY month
+    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+);
+
+-- Date extraction
+DATE_TRUNC('month', date);
+EXTRACT(YEAR FROM date);
+
+
+/* ================================
+   3. DEDUPLICATION
+   ================================ */
+
+-- Latest record per group
+SELECT *
+FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY id ORDER BY date DESC) rn
+    FROM t
+)
+WHERE rn = 1;
+
+-- Remove duplicates
+ROW_NUMBER() OVER (PARTITION BY col1, col2 ORDER BY id);
+
+
+/* ================================
+   4. SUBQUERIES
+   ================================ */
+
+-- EXISTS
+SELECT *
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.customer_id = c.customer_id
+);
+
+-- Correlated subquery
+SELECT name,
+       (SELECT AVG(salary)
+        FROM employees e2
+        WHERE e2.department = e1.department)
+FROM employees e1;
+
+-- IN vs EXISTS
+-- IN = value match
+-- EXISTS = existence check
+
+
+/* ================================
+   5. PIVOTING
+   ================================ */
+
+-- Manual pivot
+SELECT
+    SUM(CASE WHEN status = 'A' THEN 1 END) AS count_a,
+    SUM(CASE WHEN status = 'B' THEN 1 END) AS count_b
+FROM t;
+
+-- Pivot by group
+SELECT
+    department,
+    SUM(CASE WHEN gender = 'M' THEN 1 END) AS male,
+    SUM(CASE WHEN gender = 'F' THEN 1 END) AS female
+FROM t
+GROUP BY department;
+
+
+/* ================================
+   6. COMPLEX CASE
+   ================================ */
+
+-- Bucketing
+CASE 
+  WHEN age < 18 THEN 'Minor'
+  WHEN age < 65 THEN 'Adult'
+  ELSE 'Senior'
+END;
+
+-- Conditional aggregation
+SUM(CASE WHEN score > 90 THEN 1 ELSE 0 END);
+
+
+/* ================================
+   7. HAVING vs WHERE
+   ================================ */
+
+-- HAVING (after aggregation)
+SELECT department, COUNT(*)
+FROM employees
+GROUP BY department
+HAVING COUNT(*) > 10;
+
+
+/* ================================
+   8. SET OPERATIONS
+   ================================ */
+
+-- UNION (removes duplicates)
+SELECT * FROM a
+UNION
+SELECT * FROM b;
+
+-- UNION ALL (keeps duplicates)
+SELECT * FROM a
+UNION ALL
+SELECT * FROM b;
+
+-- INTERSECT
+SELECT id FROM a
+INTERSECT
+SELECT id FROM b;
+
+-- EXCEPT
+SELECT id FROM a
+EXCEPT
+SELECT id FROM b;
+
+
+/* ================================
+   9. WINDOW FUNCTION FILTERING
+   ================================ */
+
+-- Correct way
+SELECT *
+FROM (
+    SELECT *, RANK() OVER (...) rnk
+    FROM t
+)
+WHERE rnk = 1;
+
+
+/* ================================
+   10. PERFORMANCE BASICS
+   ================================ */
+
+-- Filter early
+WHERE date >= '2024-01-01';
+
+-- Avoid SELECT *
+SELECT col1, col2 FROM table;
+
+-- Index important columns:
+-- JOIN, WHERE, ORDER BY
+
+
+/* ================================
+   11. NULL HANDLING
+   ================================ */
+
+-- Replace NULL
+COALESCE(col, 0);
+
+-- Correct NULL check
+col IS NULL;
+col IS NOT NULL;
+
+-- COUNT behavior
+COUNT(col);   -- ignores NULL
+COUNT(*);     -- counts all
+
+
+/* ================================
+   12. JSON / SEMI-STRUCTURED
+   ================================ */
+
+-- JSON extraction (varies by DB)
+data->>'name';
+
+-- Arrays
+UNNEST(array_column);
