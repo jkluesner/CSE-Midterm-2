@@ -1,0 +1,168 @@
+# ================================
+# Pandas Cheat Sheet
+# ================================
+
+# 1. Importing and Setup
+import pandas as pd
+import numpy as np
+
+# Load data
+df = pd.read_csv('file.csv')       # Read CSV file
+df = pd.read_excel('file.xlsx')    # Read Excel file
+df = pd.read_sql('SELECT * FROM table', connection)  # SQL Query
+
+# 2. Basic DataFrames
+
+# Create a DataFrame
+data = {'A': [1, 2, 3], 'B': [4, 5, 6]}
+df = pd.DataFrame(data)
+
+# View the first few rows
+df.head()   # First 5 rows
+df.tail()   # Last 5 rows
+
+# Summary of DataFrame
+df.info()   # DataFrame info (dtypes, non-null counts)
+df.describe()  # Summary statistics (mean, std, min, etc.)
+
+# Check for nulls
+df.isnull()  # Boolean DataFrame showing if null
+df.isnull().sum()  # Sum of null values per column
+
+# 3. Selecting Data
+
+# Select a column
+df['A']  # Select column 'A'
+df.A      # Select column 'A' (if no spaces in the name)
+
+# Select multiple columns
+df[['A', 'B']]  # Select columns A and B
+
+# Select rows by index
+df.iloc[0]    # First row by index
+df.iloc[:5]   # First 5 rows
+df.iloc[5:10] # Rows 5-9 (index-based slicing)
+
+# Select by condition (filtering rows)
+df[df['A'] > 1]  # Rows where A > 1
+df[(df['A'] > 1) & (df['B'] < 6)]  # Multiple conditions (AND)
+df[df['A'] == 'some_value']  # Exact match for categorical data
+
+# 4. Data Cleaning
+
+# Remove duplicates
+df.drop_duplicates()  # Remove duplicate rows
+df.drop_duplicates(subset='A')  # Remove duplicates in column 'A'
+
+# Handle missing data
+df.dropna()  # Drop rows with any NaN values
+df.fillna(0)  # Replace NaN with a specific value (0 here)
+df['A'].fillna(df['A'].mean())  # Fill NaN with the column mean
+
+# Change column names
+df.rename(columns={'A': 'a', 'B': 'b'}, inplace=True)  # Rename columns
+
+# Convert data types
+df['A'] = df['A'].astype(float)  # Convert column A to float
+df['A'] = pd.to_datetime(df['A'])  # Convert to datetime
+
+# 5. Aggregation and Grouping
+
+# Group by a column and aggregate
+df.groupby('A').sum()   # Sum of each group
+df.groupby('A')['B'].mean()  # Mean of 'B' grouped by 'A'
+df.groupby('A').agg({'B': 'sum', 'C': 'mean'})  # Multiple aggregations
+
+# Apply a custom function to each group
+df.groupby('A').apply(lambda x: x['B'].max())  # Apply custom function
+
+# Pivot tables
+df.pivot_table(values='B', index='A', columns='C', aggfunc='sum')  # Pivot with aggregation
+
+# 6. Merging and Joining
+
+# Merge DataFrames (like SQL JOIN)
+df1.merge(df2, on='A', how='inner')  # Inner join on column 'A'
+df1.merge(df2, left_on='A', right_on='B', how='left')  # Left join
+
+# Concatenate DataFrames
+pd.concat([df1, df2], axis=0)  # Concatenate rows (default)
+pd.concat([df1, df2], axis=1)  # Concatenate columns
+
+# Join DataFrames by index
+df1.join(df2, how='outer')  # Outer join on index
+
+# 7. Data Transformation
+
+# Apply functions to columns
+df['A'] = df['A'].apply(lambda x: x * 2)  # Apply function to column
+df['A'] = df['A'].map({'a': 1, 'b': 2})   # Map values in column A
+
+# Apply functions row-wise
+df.apply(lambda row: row['A'] + row['B'], axis=1)  # Apply to rows (axis=1)
+
+# Sort values
+df.sort_values(by='A', ascending=False)  # Sort by column 'A'
+df.sort_values(by=['A', 'B'], ascending=[True, False])  # Sort by multiple columns
+
+# Add or remove columns
+df['new_col'] = df['A'] + df['B']  # Add a new column
+df.drop(columns=['new_col'], inplace=True)  # Remove a column
+
+# 8. String Manipulation
+
+# String methods (on whole column)
+df['A'] = df['A'].str.upper()  # Convert to uppercase
+df['A'] = df['A'].str.replace('old', 'new')  # Replace string
+df['A'] = df['A'].str.contains('pattern')  # Boolean column for pattern match
+
+# Split string into multiple columns
+df[['first_name', 'last_name']] = df['full_name'].str.split(' ', expand=True)
+
+# 9. Working with Dates
+
+# Convert to datetime
+df['date'] = pd.to_datetime(df['date'])
+
+# Extract date components
+df['year'] = df['date'].dt.year    # Year
+df['month'] = df['date'].dt.month  # Month
+df['day'] = df['date'].dt.day      # Day
+df['weekday'] = df['date'].dt.weekday  # Weekday (0=Monday)
+
+# Resample (for time series data)
+df.set_index('date', inplace=True)
+df.resample('M').sum()  # Resample by month and sum
+df.resample('D').mean()  # Resample by day and get mean
+
+# 10. Plotting (With Matplotlib Integration)
+
+# Basic plot
+df['A'].plot()  # Simple line plot
+df.plot(x='A', y='B', kind='scatter')  # Scatter plot
+
+# Histogram
+df['A'].hist(bins=10)
+
+# Boxplot
+df.boxplot(column='A', by='B')  # Boxplot grouped by column B
+
+# 11. File I/O (Input/Output)
+
+# Read CSV / Excel
+df = pd.read_csv('file.csv')
+df = pd.read_excel('file.xlsx')
+
+# Save to CSV / Excel
+df.to_csv('output.csv', index=False)   # Save to CSV
+df.to_excel('output.xlsx', index=False)  # Save to Excel
+
+# 12. Handling Large Datasets
+
+# Read in chunks
+chunk_size = 10000
+for chunk in pd.read_csv('large_file.csv', chunksize=chunk_size):
+    process(chunk)  # Process each chunk
+
+# Optimize memory usage
+df = pd.read_csv('file.csv', dtype={'col1': 'int32', 'col2': 'float32'})  # Specify dtypes
